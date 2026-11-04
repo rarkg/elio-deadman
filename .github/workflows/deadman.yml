@@ -1,0 +1,44 @@
+name: Dead-man switch
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      pulse_url:
+        description: 'Heartbeat URL to read instead of the real one (drills)'
+        required: false
+      max_age_min:
+        description: 'Minutes of silence before alerting'
+        required: false
+        default: '15'
+permissions:
+  contents: write
+concurrency:
+  group: deadman
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read the heartbeat and alert if it stopped
+        env:
+          PULSE_URL: ${{ inputs.pulse_url || secrets.PULSE_URL }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          MAX_AGE_MIN: ${{ inputs.max_age_min || '15' }}
+          DRILL: ${{ inputs.pulse_url != '' && inputs.pulse_url != null }}
+        run: node deadman.mjs
+      - name: Remember what was announced
+        if: always()
+        run: |
+          if ! git diff --quiet || [ -n "$(git status --porcelain)" ] || [ "$(date -u +%u%H%M | cut -c1-3)" = "102" ]; then
+            git config user.name "elio-deadman"
+            git config user.email "elio-deadman@users.noreply.github.com"
+            git add state.json state-drill.json 2>/dev/null || git add -A
+            git commit -m "state $(date -u +%FT%TZ)" || true
+            git push || true
+          fi

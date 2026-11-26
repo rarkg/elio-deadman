@@ -1,9 +1,9 @@
 {
   "downSeenAt": null,
-  "lastRunAt": 1795692663525,
-  "lastAgeMin": 0.6,
+  "lastRunAt": 1795724924094,
+  "lastAgeMin": 0.1,
   "alertedAt": null,
   "auditSeen": true,
-  "lastGapEnd": 1795016522259,
-  "lastDrillExcusedAt": 1795024486862
+  "lastGapEnd": 1795703469107,
+  "lastDrillExcusedAt": 1795724924094
 }
